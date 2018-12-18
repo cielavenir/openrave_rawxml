@@ -48,11 +48,13 @@ namespace OpenRAVE {
 				xmlname.resize(xmlname_orig.size());
 				std::transform(xmlname_orig.begin(), xmlname_orig.end(), xmlname.begin(), toupper);
 
-				if(stwriter.empty()||sttag.empty()||sttag.back()!=xmlname){
-					// todo error
+				if(xmlname!="XMLTRANSFER_ARRAY_TOP"){
+					if(stwriter.empty()||sttag.empty()||sttag.back()!=xmlname){
+						// todo error
+					}
+					sttag.pop_back();
+					stwriter.pop_back();
 				}
-				sttag.pop_back();
-				stwriter.pop_back();
 				return false;
 			}
 
