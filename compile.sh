@@ -14,7 +14,7 @@ fi
 OPENRAVE_DIR=$(<<<${Entries} tr -d -- "\n") # openrave-0.11
 OPENRAVE_PYDIR="_"$(<<<${OPENRAVE_DIR} sed -e s/openrave/openravepy/ | tr -- "-." "__") # _openravepy_0_11
 
-g++ -std=c++98 -O2 -fPIC -shared -o openrave_rawxml.so \
+g++ -std=gnu++98 -O2 -fPIC -shared -o openrave_rawxml.so \
 -I ${PREFIX}/include/${OPENRAVE_DIR} -I ${PREFIX}/include -I /usr/include/python2.7 -I /usr/include/libxml2 \
 openrave_rawxml.cpp parsexml.cpp \
 ${PREFIX}/lib/python2.7/site-packages/openravepy/${OPENRAVE_PYDIR}/openravepy_int.so \

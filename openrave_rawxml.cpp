@@ -16,15 +16,61 @@
 #include <openrave/xmlreaders.h>
 #include <boost/python.hpp>
 #include <string>
+#include <sstream>
 #include <vector>
+#define FOREACH(it, v) for(typeof((v).begin())it = (v).begin(); it != (v).end(); (it)++)
+
+std::vector<OpenRAVE::UserDataPtr> vRegisteredReaders;
 
 namespace OpenRAVE {
 	namespace LocalXML {
 		bool ParseXMLData(OpenRAVE::BaseXMLReader& reader, const char* buffer, int size);
 	}
 	namespace xmlreaders {
+		// not OPENRAVE_API
+		class StreamXMLWriterLessSerialize : public StreamXMLWriter
+		{
+			public:
+			StreamXMLWriterLessSerialize(const std::string& xmltag, const AttributesList& atts=AttributesList()) : StreamXMLWriter(xmltag, atts) {}
+			virtual BaseXMLWriterPtr AddChild(const std::string& xmltag, const AttributesList& atts)
+			{
+				boost::shared_ptr<StreamXMLWriterLessSerialize> child(new StreamXMLWriterLessSerialize(xmltag,atts));
+				_listchildren.push_back(child);
+				return child;
+			}
+			virtual void Serialize(std::ostream& stream)
+			{
+				if( _xmltag.size() > 0 ) {
+					stream << "<" << _xmltag;
+					FOREACH(it, _atts) {
+						stream << " " << it->first << "=\"" << it->second << "\"";
+					}
+					// don't skip any lines since could affect reading back _data
+					stream << ">";
+				}
+				if( _data.size() > 0 ) {
+					if( _xmltag.size() > 0 ) {
+						//stream << "<![CDATA[" << _data << "]]>";
+						stream << _data;
+					}
+					else {
+						// there's no tag, so can render plaintext
+						stream << _data;
+					}
+				}
+				FOREACH(it, _listchildren) {
+					(*it)->Serialize(stream);
+				}
+				if( _xmltag.size() > 0 ) {
+					stream << "</" << _xmltag << ">";// << std::endl;
+				}
+			}
+		};
+		typedef boost::shared_ptr<OpenRAVE::xmlreaders::StreamXMLWriterLessSerialize> StreamXMLWriterLessSerializePtr;
+
 		class OPENRAVE_API XMLTransfer : public BaseXMLReader
 		{
+			protected:
 			std::vector<BaseXMLWriterPtr> stwriter;
 			std::vector<std::string> sttag;
 			public:
@@ -82,7 +128,7 @@ namespace OpenRAVE {
 				if( writer->GetFormat() == "collada" ) {
 					AttributesList atts;
 					//atts.push_back(make_pair(std::string("type"),"xmlreadable"));
-					atts.push_back(make_pair(std::string("name"), GetXMLId()));
+					atts.push_back(make_pair(std::string("type"), GetXMLId()));
 					BaseXMLWriterPtr child = writer->AddChild("extra",atts);
 					atts.clear();
 					atts.push_back(make_pair(std::string("profile"), _profile));
@@ -93,6 +139,72 @@ namespace OpenRAVE {
 				LocalXML::ParseXMLData(trans,data.c_str(),data.size());
 			}
 		};
+		typedef boost::shared_ptr<OpenRAVE::xmlreaders::RawXMLReadable> RawXMLReadablePtr;
+
+		// not OPENRAVE_API
+		class XMLTransferStreamSerialize : public XMLTransfer
+		{
+			StreamXMLWriterLessSerializePtr streamwriter;
+			const std::string xmlid;
+			std::string profile;
+			int techniquecnt;
+			public:
+			XMLTransferStreamSerialize(StreamXMLWriterLessSerializePtr writer, const std::string& _xmlid):XMLTransfer(writer), streamwriter(writer), profile("OpenAVE"), xmlid(_xmlid), techniquecnt(0) {}
+
+			virtual ProcessElement startElement(const std::string& xmlname_orig, const AttributesList& atts)
+			{
+				std::string xmlname;
+				xmlname.resize(xmlname_orig.size());
+				std::transform(xmlname_orig.begin(), xmlname_orig.end(), xmlname.begin(), toupper);
+
+				if(xmlname=="TECHNIQUE"){
+					if(techniquecnt++==0){
+						FOREACH(itatt,atts){
+							if( itatt->first == "profile" ){
+								profile = itatt->second;
+							}
+						}
+						return PE_Support;
+					}
+				}
+				return XMLTransfer::startElement(xmlname_orig,atts);
+			}
+
+			virtual bool endElement(const std::string& xmlname_orig)
+			{
+				std::string xmlname;
+				xmlname.resize(xmlname_orig.size());
+				std::transform(xmlname_orig.begin(), xmlname_orig.end(), xmlname.begin(), toupper);
+
+				if(xmlname=="TECHNIQUE"){
+					if(--techniquecnt==0)return true;
+				}
+				return XMLTransfer::endElement(xmlname_orig);
+			}
+
+			virtual XMLReadablePtr GetReadable() {
+				std::ostringstream ss;
+				streamwriter->Serialize(ss);
+				return RawXMLReadablePtr(new RawXMLReadable(xmlid,ss.str(),profile));
+			}
+		};
+		typedef boost::shared_ptr<OpenRAVE::xmlreaders::XMLTransferStreamSerialize> XMLTransferStreamSerializePtr;
+
+		// not OPENRAVE_API
+		class ExtraFieldAcceptorFactory
+		{
+			const std::string xmlid;
+			public:
+			ExtraFieldAcceptorFactory(const std::string& _xmlid) : xmlid(_xmlid) {}
+			BaseXMLReaderPtr operator() (InterfaceBasePtr ptr, const AttributesList& atts) {
+				StreamXMLWriterLessSerializePtr writer(new StreamXMLWriterLessSerialize("",atts)); // not xmlid
+				return XMLTransferStreamSerializePtr(new XMLTransferStreamSerialize(writer,xmlid));
+			}
+		};
+
+		void OPENRAVE_API AcceptExtraField(InterfaceType type, const std::string& xmlid){
+			::vRegisteredReaders.push_back(RaveRegisterXMLReader(type,xmlid,ExtraFieldAcceptorFactory(xmlid)));
+		}
 	}
 }
 
@@ -108,5 +220,6 @@ namespace openravepy {
 	BOOST_PYTHON_MODULE(openrave_rawxml)
 	{
 		def("CreateRawXMLReadable",pyCreateRawXMLReadable, args("xmlid", "data", "profile"));
+		def("AcceptExtraField",OpenRAVE::xmlreaders::AcceptExtraField, args("type", "xmlid"));
 	}
 }
