@@ -218,12 +218,11 @@ namespace OpenRAVE {
 	class OPENRAVE_API RawJSONReadable : public Readable
 	{
 		std::string _data;
-		std::string _profile;
 		public:
-		RawJSONReadable(const std::string& xmlid, const std::string& data, const std::string& profile="OpenRAVE") : Readable(xmlid), _data(data), _profile(profile)
+		RawJSONReadable(const std::string& xmlid, const std::string& data) : Readable(xmlid), _data(data)
 		{
 		}
-		RawJSONReadable(const std::string& xmlid) : Readable(xmlid), _data(""), _profile("OpenRAVE")
+		RawJSONReadable(const std::string& xmlid) : Readable(xmlid), _data("")
 		{
 		}
 		bool SerializeXML(BaseXMLWriterPtr writer, int options) const
@@ -285,15 +284,15 @@ namespace openravepy {
 	{
 		return toPyReadable(ReadablePtr(new OpenRAVE::xmlreaders::RawXMLReadable(xmlid, data, profile)));
 	}
-	object pyCreateRawJSONReadable(const std::string& xmlid, const std::string& data, const std::string& profile="OpenRAVE")
+	object pyCreateRawJSONReadable(const std::string& xmlid, const std::string& data)
 	{
-		return toPyReadable(ReadablePtr(new OpenRAVE::RawJSONReadable(xmlid, data, profile)));
+		return toPyReadable(ReadablePtr(new OpenRAVE::RawJSONReadable(xmlid, data)));
 	}
 
 	BOOST_PYTHON_MODULE(openrave_rawxml)
 	{
 		def("CreateRawXMLReadable",pyCreateRawXMLReadable, args("xmlid", "data", "profile"));
-		def("CreateRawJSONReadable",pyCreateRawJSONReadable, args("xmlid", "data", "profile"));
+		def("CreateRawJSONReadable",pyCreateRawJSONReadable, args("xmlid", "data"));
 		def("AcceptExtraField",OpenRAVE::AcceptExtraField, args("type", "xmlid"));
 	}
 }
