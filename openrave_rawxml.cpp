@@ -259,17 +259,13 @@ namespace OpenRAVE {
 	// not OPENRAVE_API
 	class JSONTransferReader : public BaseJSONReader
 	{
-		std::string _xmlid;
 		RawJSONReadablePtr readable;
 		public:
-		JSONTransferReader(const std::string &xmlid) : _xmlid(xmlid), readable(new RawJSONReadable(xmlid))
+		JSONTransferReader(const std::string &xmlid) : readable(new RawJSONReadable(xmlid))
 		{
 		}
 		virtual ReadablePtr GetReadable() {
 			return readable;
-		}
-		virtual void DeserializeJSON(const rapidjson::Value& value, dReal fUnitScale=1.0) {
-			readable->DeserializeJSON(value, fUnitScale);
 		}
 	};
 	typedef boost::shared_ptr<OpenRAVE::JSONTransferReader> JSONTransferReaderPtr;
