@@ -215,7 +215,7 @@ namespace OpenRAVE {
 	}
 
 	/// JSON ///
-	class OPENRAVE_API RawJSONReadable : public Readable//, public boost::enable_shared_from_this<RawJSONReadable>
+	class OPENRAVE_API RawJSONReadable : public Readable
 	{
 		std::string _data;
 		public:
