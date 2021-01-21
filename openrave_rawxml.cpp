@@ -70,13 +70,13 @@ namespace OpenRAVE {
 		};
 		typedef boost::shared_ptr<OpenRAVE::xmlreaders::StreamXMLWriterLessSerialize> StreamXMLWriterLessSerializePtr;
 
-		class OPENRAVE_API XMLTransfer : public BaseXMLReader
+		class OPENRAVE_API XMLTransferReader : public BaseXMLReader
 		{
 			protected:
 			std::vector<BaseXMLWriterPtr> stwriter;
 			std::vector<std::string> sttag;
 			public:
-			XMLTransfer(BaseXMLWriterPtr writer){stwriter.push_back(writer);}
+			XMLTransferReader(BaseXMLWriterPtr writer){stwriter.push_back(writer);}
 			virtual ProcessElement startElement(const std::string& xmlname_orig, const AttributesList& atts)
 			{
 				std::string xmlname;
@@ -115,7 +115,7 @@ namespace OpenRAVE {
 				if(i<ch.size())stwriter.back()->SetCharData(ch);
 			}
 		};
-		typedef boost::shared_ptr<OpenRAVE::xmlreaders::XMLTransfer> XMLTransferPtr;
+		typedef boost::shared_ptr<OpenRAVE::xmlreaders::XMLTransferReader> XMLTransferReaderPtr;
 
 		class OPENRAVE_API RawXMLReadable : public Readable
 		{
@@ -136,7 +136,7 @@ namespace OpenRAVE {
 					atts.push_back(make_pair(std::string("profile"), _profile));
 					writer = child->AddChild("technique",atts);
 				}
-				XMLTransfer trans(writer);
+				XMLTransferReader trans(writer);
 				std::string data = std::string("<XMLTRANSFER_ARRAY_TOP>")+_data+"</XMLTRANSFER_ARRAY_TOP>";
 				LocalXML::ParseXMLData(trans,data.c_str(),data.size());
 				return true;
@@ -153,14 +153,14 @@ namespace OpenRAVE {
 		typedef boost::shared_ptr<OpenRAVE::xmlreaders::RawXMLReadable> RawXMLReadablePtr;
 
 		// not OPENRAVE_API
-		class XMLTransferStreamSerialize : public XMLTransfer
+		class XMLTransferStreamSerialize : public XMLTransferReader
 		{
 			StreamXMLWriterLessSerializePtr streamwriter;
 			const std::string xmlid;
 			std::string profile;
 			int techniquecnt;
 			public:
-			XMLTransferStreamSerialize(StreamXMLWriterLessSerializePtr writer, const std::string& _xmlid):XMLTransfer(writer), streamwriter(writer), profile("OpenAVE"), xmlid(_xmlid), techniquecnt(0) {}
+			XMLTransferStreamSerialize(StreamXMLWriterLessSerializePtr writer, const std::string& _xmlid):XMLTransferReader(writer), streamwriter(writer), profile("OpenRAVE"), xmlid(_xmlid), techniquecnt(0) {}
 
 			virtual ProcessElement startElement(const std::string& xmlname_orig, const AttributesList& atts)
 			{
@@ -178,7 +178,7 @@ namespace OpenRAVE {
 						return PE_Support;
 					}
 				}
-				return XMLTransfer::startElement(xmlname_orig,atts);
+				return XMLTransferReader::startElement(xmlname_orig,atts);
 			}
 
 			virtual bool endElement(const std::string& xmlname_orig)
@@ -190,7 +190,7 @@ namespace OpenRAVE {
 				if(xmlname=="TECHNIQUE"){
 					if(--techniquecnt==0)return true;
 				}
-				return XMLTransfer::endElement(xmlname_orig);
+				return XMLTransferReader::endElement(xmlname_orig);
 			}
 
 			virtual ReadablePtr GetReadable() {
@@ -215,7 +215,7 @@ namespace OpenRAVE {
 	}
 
 	/// JSON ///
-	class OPENRAVE_API RawJSONReadable : public Readable
+	class OPENRAVE_API RawJSONReadable : public Readable//, public boost::enable_shared_from_this<RawJSONReadable>
 	{
 		std::string _data;
 		public:
@@ -246,12 +246,12 @@ namespace OpenRAVE {
 	typedef boost::shared_ptr<OpenRAVE::RawJSONReadable> RawJSONReadablePtr;
 
 	// not OPENRAVE_API
-	class JSONTransfer : public BaseJSONReader
+	class JSONTransferReader : public BaseJSONReader
 	{
 		std::string _xmlid;
 		RawJSONReadablePtr readable;
 		public:
-		JSONTransfer(const std::string &xmlid) : _xmlid(xmlid), readable(new RawJSONReadable(xmlid))
+		JSONTransferReader(const std::string &xmlid) : _xmlid(xmlid), readable(new RawJSONReadable(xmlid))
 		{
 		}
 		virtual ReadablePtr GetReadable() {
@@ -261,7 +261,7 @@ namespace OpenRAVE {
 			readable->DeserializeJSON(value, fUnitScale);
 		}
 	};
-	typedef boost::shared_ptr<OpenRAVE::JSONTransfer> JSONTransferPtr;
+	typedef boost::shared_ptr<OpenRAVE::JSONTransferReader> JSONTransferReaderPtr;
 
 	// not OPENRAVE_API
 	class JSONExtraFieldAcceptorFactory
@@ -270,7 +270,7 @@ namespace OpenRAVE {
 		public:
 		JSONExtraFieldAcceptorFactory(const std::string& _xmlid) : xmlid(_xmlid) {}
 		BaseJSONReaderPtr operator() (ReadablePtr ptr, const AttributesList& atts) {
-			return JSONTransferPtr(new JSONTransfer(xmlid));
+			return JSONTransferReaderPtr(new JSONTransferReader(xmlid));
 		}
 	};
 
