@@ -15,11 +15,9 @@
 #include <openrave/openrave.h>
 #include <openrave/xmlreaders.h>
 #include <openrave/openravejson.h>
-#include <boost/python.hpp>
 #include <string>
 #include <sstream>
 #include <vector>
-#define FOREACH(it, v) for(typeof((v).begin())it = (v).begin(); it != (v).end(); (it)++)
 
 std::vector<OpenRAVE::UserDataPtr> vRegisteredReaders;
 
@@ -44,8 +42,8 @@ namespace OpenRAVE {
 			{
 				if( _xmltag.size() > 0 ) {
 					stream << "<" << _xmltag;
-					FOREACH(it, _atts) {
-						stream << " " << it->first << "=\"" << it->second << "\"";
+					for(auto &it: _atts) {
+						stream << " " << it.first << "=\"" << it.second << "\"";
 					}
 					// don't skip any lines since could affect reading back _data
 					stream << ">";
@@ -60,8 +58,8 @@ namespace OpenRAVE {
 						stream << _data;
 					}
 				}
-				FOREACH(it, _listchildren) {
-					(*it)->Serialize(stream);
+				for(auto &it: _listchildren) {
+					it->Serialize(stream);
 				}
 				if( _xmltag.size() > 0 ) {
 					stream << "</" << _xmltag << ">";// << std::endl;
@@ -170,9 +168,9 @@ namespace OpenRAVE {
 
 				if(xmlname=="TECHNIQUE"){
 					if(techniquecnt++==0){
-						FOREACH(itatt,atts){
-							if( itatt->first == "profile" ){
-								profile = itatt->second;
+						for(auto &itatt: atts){
+							if( itatt.first == "profile" ){
+								profile = itatt.second;
 							}
 						}
 						return PE_Support;
@@ -287,23 +285,40 @@ namespace OpenRAVE {
 	}
 }
 
-using namespace boost::python;
+#include <boost/shared_ptr.hpp>
 typedef boost::shared_ptr<OpenRAVE::Readable> ReadablePtr;
+
+#include <openravepy/openravepy_config.h>
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+#define OPENRAVE_PYTHON_MODULE(X) PYBIND11_MODULE(X, m)
+#include <openravepy/map.h>
+#define PY_ARG_(x) , py ::arg(x)
+#define PY_ARGS(...) MAP(PY_ARG_, __VA_ARGS__)
+#else
+#include <boost/python.hpp>
+namespace py = boost::python;
+#define OPENRAVE_PYTHON_MODULE(X) BOOST_PYTHON_MODULE(X)
+#define PY_ARGS(...) , py::args(__VA_ARGS__)
+#endif
+
 namespace openravepy {
-	object toPyReadable(ReadablePtr p);
-	object pyCreateRawXMLReadable(const std::string& xmlid, const std::string& data, const std::string& profile="OpenRAVE")
+	py::object toPyReadable(ReadablePtr p);
+	py::object pyCreateRawXMLReadable(const std::string& xmlid, const std::string& data, const std::string& profile="OpenRAVE")
 	{
 		return toPyReadable(ReadablePtr(new OpenRAVE::xmlreaders::RawXMLReadable(xmlid, data, profile)));
 	}
-	object pyCreateRawJSONReadable(const std::string& xmlid, const std::string& data)
+	py::object pyCreateRawJSONReadable(const std::string& xmlid, const std::string& data)
 	{
 		return toPyReadable(ReadablePtr(new OpenRAVE::RawJSONReadable(xmlid, data)));
 	}
 
-	BOOST_PYTHON_MODULE(openrave_rawxml)
+	//BOOST_PYTHON_MODULE(openrave_rawxml)
+	OPENRAVE_PYTHON_MODULE(openrave_rawxml)
 	{
-		def("CreateRawXMLReadable",pyCreateRawXMLReadable, args("xmlid", "data", "profile"));
-		def("CreateRawJSONReadable",pyCreateRawJSONReadable, args("xmlid", "data"));
-		def("AcceptExtraField",OpenRAVE::AcceptExtraField, args("type", "xmlid"));
+		py::def("CreateRawXMLReadable",pyCreateRawXMLReadable PY_ARGS("xmlid", "data", "profile"));
+		py::def("CreateRawJSONReadable",pyCreateRawJSONReadable PY_ARGS("xmlid", "data"));
+		py::def("AcceptExtraField",OpenRAVE::AcceptExtraField PY_ARGS("type", "xmlid"));
 	}
 }
