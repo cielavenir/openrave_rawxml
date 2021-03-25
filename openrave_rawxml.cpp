@@ -296,11 +296,13 @@ namespace py = pybind11;
 #include <openravepy/map.h>
 #define PY_ARG_(x) , py ::arg(x)
 #define PY_ARGS(...) MAP(PY_ARG_, __VA_ARGS__)
+#define DEF m.def
 #else
 #include <boost/python.hpp>
 namespace py = boost::python;
 #define OPENRAVE_PYTHON_MODULE(X) BOOST_PYTHON_MODULE(X)
 #define PY_ARGS(...) , py::args(__VA_ARGS__)
+#define DEF py::def
 #endif
 
 namespace openravepy {
@@ -317,8 +319,8 @@ namespace openravepy {
 	//BOOST_PYTHON_MODULE(openrave_rawxml)
 	OPENRAVE_PYTHON_MODULE(openrave_rawxml)
 	{
-		py::def("CreateRawXMLReadable",pyCreateRawXMLReadable PY_ARGS("xmlid", "data", "profile"));
-		py::def("CreateRawJSONReadable",pyCreateRawJSONReadable PY_ARGS("xmlid", "data"));
-		py::def("AcceptExtraField",OpenRAVE::AcceptExtraField PY_ARGS("type", "xmlid"));
+		DEF("CreateRawXMLReadable",pyCreateRawXMLReadable PY_ARGS("xmlid", "data", "profile"));
+		DEF("CreateRawJSONReadable",pyCreateRawJSONReadable PY_ARGS("xmlid", "data"));
+		DEF("AcceptExtraField",OpenRAVE::AcceptExtraField PY_ARGS("type", "xmlid"));
 	}
 }

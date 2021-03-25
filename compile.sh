@@ -12,12 +12,17 @@ if [ "$Entries" == "" -o $(<<<$Entries wc -l) -ge 2 ]; then
 fi
 
 OPENRAVE_DIR=$(<<<${Entries} tr -d -- "\n") # openrave-0.11
-OPENRAVE_PYDIR="_"$(<<<${OPENRAVE_DIR} sed -e s/openrave/openravepy/ | tr -- "-." "__") # _openravepy_0_11
+#OPENRAVE_PYDIR="_"$(<<<${OPENRAVE_DIR} sed -e s/openrave/openravepy/ | tr -- "-." "__") # _openravepy_0_11
+#OPENRAVEPY_INT=${PREFIX}/lib/python2.7/site-packages/openravepy/${OPENRAVE_PYDIR}/openravepy_int.so
+
+PYTHON=${PYTHON:-python}
+OPENRAVEPY_INT="$(${PYTHON} -c 'import openravepy;print(openravepy.openravepy_int.__file__)')"
 SOURCE_DIR=$(dirname "$0")
 
 g++ -std=gnu++11 -O2 -fPIC -shared -o openrave_rawxml.so \
--I ${PREFIX}/include/${OPENRAVE_DIR} -I ${PREFIX}/include -I /usr/include/python2.7 -I /usr/include/libxml2 \
+-I ${PREFIX}/include/${OPENRAVE_DIR} -I ${PREFIX}/include $(${PYTHON}-config --includes) -I /usr/include/libxml2 \
 "${SOURCE_DIR}/openrave_rawxml.cpp" "${SOURCE_DIR}/parsexml.cpp" \
-${PREFIX}/lib/python2.7/site-packages/openravepy/${OPENRAVE_PYDIR}/openravepy_int.so \
--L ${PREFIX}/lib -lpython2.7 -l$(<<<${OPENRAVE_DIR} tr -d -- -) -lboost_system -lboost_python -llog4cxx -lxml2 \
--Wl,--no-undefined -Wl,-rpath,${PREFIX}/lib/python2.7/site-packages/openravepy/${OPENRAVE_PYDIR} -Wl,-rpath,${PREFIX}/lib
+"${OPENRAVEPY_INT}" \
+-Wl,--as-needed \
+-L ${PREFIX}/lib $($PYTHON-config --libs) -l$(<<<${OPENRAVE_DIR} tr -d -- -) -lboost_system -lboost_python -llog4cxx -lxml2 \
+-Wl,--no-undefined "-Wl,-rpath,$(dirname ${OPENRAVEPY_INT})" -Wl,-rpath,${PREFIX}/lib
