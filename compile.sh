@@ -19,10 +19,18 @@ PYTHON=${PYTHON:-python}
 OPENRAVEPY_INT="$(${PYTHON} -c 'import openravepy;print(openravepy.openravepy_int.__file__)')"
 SOURCE_DIR=$(dirname "$0")
 
+PYTHON_LIBS=$($PYTHON-config --libs --embed 2>/dev/null)
+if [ $? -ne 0 ]; then
+    PYTHON_LIBS=$($PYTHON-config --libs)
+fi
+
+# sorry for now manually comment out this if building pybind11 version
+PYTHON_BINDING_LIBS="-lboost_python"
+
 g++ -std=gnu++11 -O2 -fPIC -shared -o openrave_rawxml.so \
 -I ${PREFIX}/include/${OPENRAVE_DIR} -I ${PREFIX}/include $(${PYTHON}-config --includes) -I /usr/include/libxml2 \
 "${SOURCE_DIR}/openrave_rawxml.cpp" "${SOURCE_DIR}/parsexml.cpp" \
 "${OPENRAVEPY_INT}" \
 -Wl,--as-needed \
--L ${PREFIX}/lib $($PYTHON-config --libs) -l$(<<<${OPENRAVE_DIR} tr -d -- -) -lboost_system -lboost_python -llog4cxx -lxml2 \
+-L ${PREFIX}/lib ${PYTHON_LIBS} -l$(<<<${OPENRAVE_DIR} tr -d -- -) ${PYTHON_BINDING_LIBS} -llog4cxx -lxml2 \
 -Wl,--no-undefined "-Wl,-rpath,$(dirname ${OPENRAVEPY_INT})" -Wl,-rpath,${PREFIX}/lib

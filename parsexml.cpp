@@ -1,5 +1,6 @@
 /// partly copied libopenrave/libopenrave.cpp because it is not declared as OPENRAVE_API... ///
 
+#define BOOST_SYSTEM_NO_DEPRECATED
 #include <openrave/openrave.h>
 #include <openrave/xmlreaders.h>
 #include <cstdarg>
