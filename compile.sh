@@ -29,7 +29,7 @@ if ! grep -F '#define USE_PYBIND11_PYTHON_BINDINGS' ${PREFIX}/include/${OPENRAVE
 fi
 
 g++ -std=gnu++11 -O2 -fPIC -shared -o openrave_rawxml.so \
--I ${PREFIX}/include/${OPENRAVE_DIR} -I ${PREFIX}/include $(${PYTHON}-config --includes) -I /usr/include/libxml2 \
+-I ${PREFIX}/include/${OPENRAVE_DIR} -I ${PREFIX}/include $(${PYTHON}-config --includes) -I "$(${PYTHON} -c 'import numpy;print(numpy.get_include())')" -I /usr/include/libxml2 \
 "${SOURCE_DIR}/openrave_rawxml.cpp" "${SOURCE_DIR}/parsexml.cpp" \
 "${OPENRAVEPY_INT}" \
 -Wl,--as-needed \

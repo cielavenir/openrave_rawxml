@@ -320,22 +320,13 @@ namespace OpenRAVE {
 	}
 }
 
-#include <openravepy/openravepy_config.h>
+#include <openravepy/bindings.h>
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-#define OPENRAVE_PYTHON_MODULE(X) PYBIND11_MODULE(X, m)
-#include <openravepy/map.h>
-#define PY_ARG_(x) , py ::arg(x)
-#define PY_ARGS(...) MAP(PY_ARG_, __VA_ARGS__)
-#define DEF m.def
+#define PYDEF(fndef) m.fndef
 #else
-#include <boost/python.hpp>
-namespace py = boost::python;
-#define OPENRAVE_PYTHON_MODULE(X) BOOST_PYTHON_MODULE(X)
-#define PY_ARGS(...) , py::args(__VA_ARGS__)
-#define DEF py::def
+#define PYDEF(fndef) fndef
 #endif
+//namespace py = openravepy::py;
 
 namespace openravepy {
 	py::object toPyReadable(ReadablePtr p);
@@ -351,8 +342,8 @@ namespace openravepy {
 	//BOOST_PYTHON_MODULE(openrave_rawxml)
 	OPENRAVE_PYTHON_MODULE(openrave_rawxml)
 	{
-		DEF("CreateRawXMLReadable",pyCreateRawXMLReadable PY_ARGS("xmlid", "data", "profile"));
-		DEF("CreateRawJSONReadable",pyCreateRawJSONReadable PY_ARGS("xmlid", "data"));
-		DEF("AcceptExtraField",OpenRAVE::AcceptExtraField PY_ARGS("type", "xmlid"));
+		PYDEF(def("CreateRawXMLReadable",pyCreateRawXMLReadable, PY_ARGS("xmlid", "data", "profile") ""));
+		PYDEF(def("CreateRawJSONReadable",pyCreateRawJSONReadable, PY_ARGS("xmlid", "data") ""));
+		PYDEF(def("AcceptExtraField",OpenRAVE::AcceptExtraField, PY_ARGS("type", "xmlid") ""));
 	}
 }
