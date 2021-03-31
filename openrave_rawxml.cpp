@@ -324,7 +324,7 @@ namespace OpenRAVE {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
 #define PYDEF(fndef) m.fndef
 #else
-#define PYDEF(fndef) fndef
+#define PYDEF(fndef) py::fndef
 #endif
 //namespace py = openravepy::py;
 
