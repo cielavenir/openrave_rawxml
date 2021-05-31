@@ -1,5 +1,8 @@
 ## openrave_rawxml openrave(py) plugin
 
+- Both boost_python and pybind11 are supported.
+- Both XML and JSON serializer are supported.
+
 ### Example
 
 - creating foo field.
