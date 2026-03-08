@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(OpenRAVERawXml)
+set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 
 find_package(OpenRAVE REQUIRED)
 find_package(LibXml2 REQUIRED)
@@ -26,7 +27,7 @@ else()
   target_link_libraries(openrave_rawxml PUBLIC Boost::python Boost::thread)
 endif()
 
-target_link_libraries(openrave_rawxml PUBLIC LibXml2::LibXml2 ${OPENRAVEPY_INT_SO_FILE} ${OpenRAVE_LIBRARIES})
+target_link_libraries(openrave_rawxml PUBLIC Python3::Python LibXml2::LibXml2 ${OPENRAVEPY_INT_SO_FILE} ${OpenRAVE_LIBRARIES})
 target_include_directories(openrave_rawxml PRIVATE ${OpenRAVE_INCLUDE_DIRS} ${OpenRAVE_PYTHON3_INCLUDE_DIRS})
 set_target_properties(openrave_rawxml PROPERTIES PREFIX "" INSTALL_RPATH "$ORIGIN")
 install(TARGETS openrave_rawxml DESTINATION ${PYTHON_INSTALL_DIR})
