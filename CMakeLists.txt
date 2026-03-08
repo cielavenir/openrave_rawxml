@@ -29,6 +29,6 @@ endif()
 
 target_link_libraries(openrave_rawxml PUBLIC Python3::Python LibXml2::LibXml2 ${OPENRAVEPY_INT_SO_FILE} ${OpenRAVE_LIBRARIES})
 target_include_directories(openrave_rawxml PRIVATE ${OpenRAVE_INCLUDE_DIRS} ${OpenRAVE_PYTHON3_INCLUDE_DIRS})
-set_target_properties(openrave_rawxml PROPERTIES PREFIX "" INSTALL_RPATH "$ORIGIN")
+set_target_properties(openrave_rawxml PROPERTIES PREFIX "" INSTALL_RPATH "$ORIGIN/openravepy/_openravepy_")
 install(TARGETS openrave_rawxml DESTINATION ${PYTHON_INSTALL_DIR})
 install(FILES ${METADATA} "${CMAKE_CURRENT_SOURCE_DIR}/dist-info/top_level.txt" DESTINATION ${PYTHON_INSTALL_DIR}/openrave_rawxml.dist-info/)
